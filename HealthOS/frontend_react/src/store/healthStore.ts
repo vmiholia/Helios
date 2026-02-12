@@ -53,11 +53,13 @@ interface HealthState {
     entries: Entry[];
     loading: boolean;
     error: string | null;
+    prefillText: string | null;
 
     // Actions
     fetchDashboard: (date?: string) => Promise<void>;
     addEntry: (text: string) => Promise<void>;
     deleteEntry: (id: number) => Promise<void>;
+    setPrefillText: (text: string | null) => void;
 }
 
 export const useHealthStore = create<HealthState>((set, get) => ({
@@ -67,11 +69,15 @@ export const useHealthStore = create<HealthState>((set, get) => ({
     entries: [],
     loading: false,
     error: null,
+    prefillText: null,
+
+    setPrefillText: (text) => set({ prefillText: text }),
 
     fetchDashboard: async (date) => {
+        const effectiveDate = date || get().date;
         set({ loading: true, error: null });
         try {
-            const url = date ? `http://localhost:8000/dashboard?date=${date}` : `http://localhost:8000/dashboard`;
+            const url = `http://localhost:8000/dashboard?date=${effectiveDate}`;
             const res = await fetch(url);
             if (!res.ok) throw new Error('Failed to fetch dashboard');
             const data = await res.json();

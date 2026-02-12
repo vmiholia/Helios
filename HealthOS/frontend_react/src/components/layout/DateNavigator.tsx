@@ -22,7 +22,12 @@ export const DateNavigator = () => {
         fetchDashboard(e.target.value);
     };
 
-    const isToday = date === new Date().toISOString().split('T')[0];
+    // Timezone-safe: use local date parts instead of UTC-based toISOString
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const isToday = date === todayStr;
+
+    const goToToday = () => fetchDashboard(todayStr);
 
     return (
         <div className="flex items-center gap-2">
@@ -70,6 +75,16 @@ export const DateNavigator = () => {
             >
                 <ChevronRight className="w-5 h-5" />
             </button>
+
+            {/* Today button — only shown when NOT on today */}
+            {!isToday && (
+                <button
+                    onClick={goToToday}
+                    className="ml-1 px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/20 transition-all"
+                >
+                    Today
+                </button>
+            )}
         </div>
     );
 };

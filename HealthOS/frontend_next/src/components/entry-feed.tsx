@@ -1,19 +1,22 @@
-import React, { useState } from 'react';
-import { useHealthStore } from '../../store/healthStore';
+'use client';
+
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useDashboard, useDeleteEntry, useUIStore } from '@/hooks/use-dashboard';
 import { Trash2, ChevronDown, ChevronUp, Info, AlertCircle, RotateCcw, Copy, Check } from 'lucide-react';
 
-const EntryCard = ({ entry }: { entry: any }) => {
-    const { deleteEntry, setPrefillText } = useHealthStore();
+function EntryCard({ entry }: { entry: any }) {
+    const deleteEntry = useDeleteEntry();
+    const { setPrefillText } = useUIStore();
     const [expanded, setExpanded] = useState(false);
     const [copied, setCopied] = useState(false);
 
-    const hasItems = entry.macros.items && entry.macros.items.length > 0;
-    const hasMicros = entry.macros.micros && Object.keys(entry.macros.micros).length > 0;
+    const hasItems = entry.macros?.items && entry.macros.items.length > 0;
+    const hasMicros = entry.macros?.micros && Object.keys(entry.macros.micros).length > 0;
 
     const copyEntry = (e: React.MouseEvent) => {
         e.stopPropagation();
-        const m = entry.macros;
+        const m = entry.macros || {};
         const lines = [
             `#${entry.id} — ${m.food_name || entry.raw_text}`,
             `Time: ${new Date(entry.ingested_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
@@ -49,25 +52,31 @@ const EntryCard = ({ entry }: { entry: any }) => {
             <div className="flex items-center justify-between p-3 cursor-pointer" onClick={() => setExpanded(!expanded)}>
                 <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-mono font-bold text-neutral-600 bg-neutral-800/60 px-1.5 py-0.5 rounded">#{entry.id}</span>
-                        <span className="text-sm text-neutral-300 font-light">{entry.macros.food_name || entry.raw_text}</span>
+                        <span className="text-[9px] font-mono font-bold text-neutral-600 bg-neutral-800/60 px-1.5 py-0.5 rounded">
+                            #{entry.id}
+                        </span>
+                        <span className="text-sm text-neutral-300 font-light">
+                            {entry.macros?.food_name || entry.raw_text}
+                        </span>
                     </div>
                     <span className="text-[10px] text-neutral-500 font-mono uppercase tracking-wider">
-                        {new Date(entry.ingested_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {entry.ingested_at
+                            ? new Date(entry.ingested_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                            : ''}
                     </span>
                 </div>
                 <div className="flex items-center gap-3">
-                    {entry.macros.warnings && entry.macros.warnings.length > 0 && (
+                    {entry.macros?.warnings && entry.macros.warnings.length > 0 && (
                         <div className="text-amber-500 animate-pulse flex items-center gap-1" title={entry.macros.warnings.join(', ')}>
                             <Info className="w-3.5 h-3.5" />
                             <span className="text-[9px] font-bold uppercase hidden sm:inline">Check Data</span>
                         </div>
                     )}
                     <div className="flex flex-col items-end gap-1">
-                        <span className="font-mono text-xs text-neutral-400">{entry.macros.calories ?? 0} kcal</span>
-                        <span className="font-mono text-[10px] text-neutral-600">{entry.macros.protein ?? 0}g P</span>
+                        <span className="font-mono text-xs text-neutral-400">{entry.macros?.calories ?? 0} kcal</span>
+                        <span className="font-mono text-[10px] text-neutral-600">{entry.macros?.protein ?? 0}g P</span>
                     </div>
-                    {/* Copy Action */}
+                    {/* Copy */}
                     <button
                         onClick={copyEntry}
                         className="p-1 hover:text-violet-400 text-neutral-700 transition-colors"
@@ -75,17 +84,24 @@ const EntryCard = ({ entry }: { entry: any }) => {
                     >
                         {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
-                    {/* Re-log Action */}
+                    {/* Re-log */}
                     <button
-                        onClick={(e) => { e.stopPropagation(); setPrefillText(entry.raw_text); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setPrefillText(entry.raw_text);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
                         className="p-1 hover:text-cyan-400 text-neutral-700 transition-colors"
                         title="Re-use this input"
                     >
                         <RotateCcw className="w-3.5 h-3.5" />
                     </button>
-                    {/* Delete Action */}
+                    {/* Delete */}
                     <button
-                        onClick={(e) => { e.stopPropagation(); deleteEntry(entry.id); }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            deleteEntry.mutate(entry.id);
+                        }}
                         className="p-1 hover:text-red-400 text-neutral-700 transition-colors"
                     >
                         <Trash2 className="w-4 h-4" />
@@ -103,7 +119,7 @@ const EntryCard = ({ entry }: { entry: any }) => {
                 {expanded && (
                     <motion.div
                         initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
+                        animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         className="px-3 pb-3 border-t border-neutral-800/50 bg-black/20"
                     >
@@ -140,7 +156,7 @@ const EntryCard = ({ entry }: { entry: any }) => {
                             </div>
                         )}
 
-                        {/* Summary Macros */}
+                        {/* Summary Macros Badges */}
                         <div className="mt-4 flex flex-wrap gap-2 border-t border-neutral-800/30 pt-3">
                             {['fiber_g', 'cholesterol_mg', 'epa_mg', 'dha_mg', 'creatine_g', 'saturated_fat_g', 'sugar_g'].map(key => {
                                 const val = entry.macros?.[key];
@@ -163,7 +179,9 @@ const EntryCard = ({ entry }: { entry: any }) => {
                                         if (typeof val !== 'number' || val === 0) return null;
                                         return (
                                             <div key={key} className="flex justify-between items-center text-[9px] text-cyan-400 group/micro bg-cyan-950/10 px-2 py-1 rounded border border-cyan-900/20">
-                                                <span className="capitalize text-neutral-400 truncate mr-1">{key.replace(/_(mg|mcg|iu|g)$/, '').replace(/_/g, " ")}</span>
+                                                <span className="capitalize text-neutral-400 truncate mr-1">
+                                                    {key.replace(/_(mg|mcg|iu|g)$/, '').replace(/_/g, ' ')}
+                                                </span>
                                                 <span className="font-mono font-bold">{val.toFixed(1)}</span>
                                             </div>
                                         );
@@ -173,7 +191,7 @@ const EntryCard = ({ entry }: { entry: any }) => {
                         )}
 
                         {/* Warnings */}
-                        {entry.macros.warnings && entry.macros.warnings.length > 0 && (
+                        {entry.macros?.warnings && entry.macros.warnings.length > 0 && (
                             <div className="mt-4 p-2 rounded bg-amber-900/20 border border-amber-500/30">
                                 <h4 className="text-[10px] uppercase tracking-widest text-amber-500 mb-1 flex items-center gap-1">
                                     <AlertCircle className="w-3 h-3" /> Extraction Warning
@@ -187,34 +205,38 @@ const EntryCard = ({ entry }: { entry: any }) => {
                         )}
 
                         <div className="mt-4 text-[10px] text-neutral-700 italic border-t border-neutral-800/30 pt-2 line-clamp-1 hover:line-clamp-none transition-all">
-                            Source: "{entry.raw_text}"
+                            Source: &quot;{entry.raw_text}&quot;
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
         </motion.div>
     );
-};
+}
 
-export const EntryFeed = () => {
-    const { entries, loading } = useHealthStore();
+export function EntryFeed() {
+    const { data, isLoading } = useDashboard();
 
-    if (loading && !entries.length) {
+    if (isLoading) {
         return <div className="text-center text-neutral-600 animate-pulse text-xs">Syncing...</div>;
     }
 
-    if (!entries.length) {
+    const entries = data?.entries || [];
+
+    if (entries.length === 0) {
         return <div className="text-center text-neutral-600 text-xs italic">No logs today.</div>;
     }
 
     return (
         <div className="space-y-3 w-full pb-20">
-            <h3 className="text-xs uppercase tracking-widest text-neutral-500 font-medium">Today's Vibe Log</h3>
-            <AnimatePresence mode='popLayout'>
-                {[...entries].reverse().map((entry) => (
-                    <EntryCard key={entry.id} entry={entry} />
-                ))}
+            <h3 className="text-xs uppercase tracking-widest text-neutral-500 font-medium">Today&apos;s Vibe Log</h3>
+            <AnimatePresence mode="popLayout">
+                {[...entries]
+                    .sort((a: any, b: any) => new Date(b.ingested_at).getTime() - new Date(a.ingested_at).getTime())
+                    .map((entry: any) => (
+                        <EntryCard key={entry.id} entry={entry} />
+                    ))}
             </AnimatePresence>
         </div>
     );
-};
+}
