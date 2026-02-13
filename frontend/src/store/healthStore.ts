@@ -7,9 +7,8 @@ const DEFAULT_TARGETS: Record<string, number> = {
     protein_g: 150,
     carbohydrate_g: 250,
     fat_total_g: 70,
-    water_ml: 3000,
     sugar_g: 30,
-    fiber_dietary_g: 30,
+    fiber_g: 30,
 
     // Vitamins
     vitamin_a_iu: 3000,
@@ -45,9 +44,7 @@ const DEFAULT_TARGETS: Record<string, number> = {
     // Other / Derived
     epa_mg: 250,
     dha_mg: 250,
-    added_sugar_g: 25, // Limit
-    saturated_fat_g: 20, // Limit
-    cholesterol_mg: 300, // Limit
+    creatine_g: 5,
 };
 
 // ─── Interfaces ──────────────────────────────────────────────

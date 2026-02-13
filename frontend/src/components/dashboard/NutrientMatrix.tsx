@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Zap, Droplet, Wind, Flame, Atom, ChevronRight, ChevronLeft, Utensils, Wheat, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flame, X, ArrowLeft, Utensils } from 'lucide-react';
 import clsx from 'clsx';
 import { useHealthStore } from '../../store/healthStore';
 
@@ -9,72 +9,66 @@ import { useHealthStore } from '../../store/healthStore';
 const ITEMS_PER_PAGE = 9;
 
 const CATEGORIES: Record<string, string[]> = {
-    'Overview': ['calories', 'protein_g', 'carbohydrate_g', 'fat_total_g', 'fiber_dietary_g', 'sugar_g', 'water_ml'],
     'Vitamins': ['vitamin_a_iu', 'vitamin_c_mg', 'vitamin_d_iu', 'vitamin_e_mg', 'vitamin_k_mcg', 'vitamin_b1_thiamine_mg', 'vitamin_b2_riboflavin_mg', 'vitamin_b3_niacin_mg', 'vitamin_b5_pantothenic_acid_mg', 'vitamin_b6_pyridoxine_mg', 'vitamin_b7_biotin_mcg', 'vitamin_b9_folate_mcg', 'vitamin_b12_cobalamin_mcg'],
     'Minerals': ['calcium_mg', 'iron_mg', 'magnesium_mg', 'phosphorus_mg', 'potassium_mg', 'sodium_mg', 'zinc_mg', 'copper_mcg', 'manganese_mg', 'selenium_mcg', 'iodine_mcg', 'chromium_mcg', 'molybdenum_mcg', 'chloride_mg'],
-    'Lipids': ['cholesterol_mg', 'saturated_fat_g', 'monounsaturated_fat_g', 'polyunsaturated_fat_g', 'trans_fat_g', 'omega_3_fatty_acids_g', 'omega_6_fatty_acids_g'],
+    'Supplements': ['creatine_g', 'epa_mg', 'dha_mg'],
 };
 
-const LABEL_MAP: Record<string, { label: string; unit: string; color: string; icon: any }> = {
+const LABEL_MAP: Record<string, { label: string; unit: string; color: string; emoji: string }> = {
     // Macros
-    calories: { label: 'Calories', unit: 'kcal', color: 'text-white', icon: Flame },
-    protein_g: { label: 'Protein', unit: 'g', color: 'text-violet-400', icon: Zap },
-    carbohydrate_g: { label: 'Carbs', unit: 'g', color: 'text-cyan-400', icon: Wheat },
-    fat_total_g: { label: 'Fats', unit: 'g', color: 'text-emerald-400', icon: Droplet },
-    fiber_dietary_g: { label: 'Fiber', unit: 'g', color: 'text-amber-500', icon: Wheat }, // Added Fiber
-    sugar_g: { label: 'Sugar', unit: 'g', color: 'text-pink-400', icon: Zap },
-    water_ml: { label: 'Water', unit: 'ml', color: 'text-blue-400', icon: Droplet },
+    calories: { label: 'Calories', unit: 'kcal', color: 'text-white', emoji: '🔥' },
+    protein_g: { label: 'Protein', unit: 'g', color: 'text-violet-400', emoji: '⚡' },
+    carbohydrate_g: { label: 'Carbs', unit: 'g', color: 'text-cyan-400', emoji: '🌾' },
+    fat_total_g: { label: 'Fats', unit: 'g', color: 'text-emerald-400', emoji: '💧' },
+    fiber_g: { label: 'Fiber', unit: 'g', color: 'text-amber-500', emoji: '🥗' },
+    sugar_g: { label: 'Sugar', unit: 'g', color: 'text-pink-400', emoji: '🍭' },
 
     // Vitamins
-    vitamin_a_iu: { label: 'Vit A', unit: 'IU', color: 'text-orange-400', icon: Atom },
-    vitamin_c_mg: { label: 'Vit C', unit: 'mg', color: 'text-yellow-400', icon: Atom },
-    vitamin_d_iu: { label: 'Vit D', unit: 'IU', color: 'text-yellow-200', icon: Atom },
-    vitamin_e_mg: { label: 'Vit E', unit: 'mg', color: 'text-emerald-300', icon: Atom },
-    vitamin_k_mcg: { label: 'Vit K', unit: 'µg', color: 'text-green-400', icon: Atom },
-    vitamin_b1_thiamine_mg: { label: 'B1 (Thiamin)', unit: 'mg', color: 'text-indigo-400', icon: Atom },
-    vitamin_b2_riboflavin_mg: { label: 'B2 (Ribofl)', unit: 'mg', color: 'text-indigo-400', icon: Atom },
-    vitamin_b3_niacin_mg: { label: 'B3 (Niacin)', unit: 'mg', color: 'text-indigo-400', icon: Atom },
-    vitamin_b5_pantothenic_acid_mg: { label: 'B5 (Panto)', unit: 'mg', color: 'text-indigo-400', icon: Atom },
-    vitamin_b6_pyridoxine_mg: { label: 'B6 (Pyridox)', unit: 'mg', color: 'text-indigo-400', icon: Atom },
-    vitamin_b7_biotin_mcg: { label: 'B7 (Biotin)', unit: 'µg', color: 'text-indigo-400', icon: Atom },
-    vitamin_b9_folate_mcg: { label: 'B9 (Folate)', unit: 'µg', color: 'text-indigo-400', icon: Atom },
-    vitamin_b12_cobalamin_mcg: { label: 'B12 (Cobal)', unit: 'µg', color: 'text-indigo-400', icon: Atom },
+    vitamin_a_iu: { label: 'Vit A', unit: 'IU', color: 'text-orange-400', emoji: '🥕' },
+    vitamin_c_mg: { label: 'Vit C', unit: 'mg', color: 'text-yellow-400', emoji: '🍋' },
+    vitamin_d_iu: { label: 'Vit D', unit: 'IU', color: 'text-yellow-200', emoji: '☀️' },
+    vitamin_e_mg: { label: 'Vit E', unit: 'mg', color: 'text-emerald-300', emoji: '🥜' },
+    vitamin_k_mcg: { label: 'Vit K', unit: 'µg', color: 'text-green-400', emoji: '🥬' },
+    vitamin_b1_thiamine_mg: { label: 'B1 (Thiamin)', unit: 'mg', color: 'text-indigo-400', emoji: '🧬' },
+    vitamin_b2_riboflavin_mg: { label: 'B2 (Ribofl)', unit: 'mg', color: 'text-indigo-400', emoji: '🧬' },
+    vitamin_b3_niacin_mg: { label: 'B3 (Niacin)', unit: 'mg', color: 'text-indigo-400', emoji: '🧬' },
+    vitamin_b5_pantothenic_acid_mg: { label: 'B5 (Panto)', unit: 'mg', color: 'text-indigo-400', emoji: '🧬' },
+    vitamin_b6_pyridoxine_mg: { label: 'B6 (Pyridox)', unit: 'mg', color: 'text-indigo-400', emoji: '🧬' },
+    vitamin_b7_biotin_mcg: { label: 'B7 (Biotin)', unit: 'µg', color: 'text-indigo-400', emoji: '🧬' },
+    vitamin_b9_folate_mcg: { label: 'B9 (Folate)', unit: 'µg', color: 'text-indigo-400', emoji: '🧬' },
+    vitamin_b12_cobalamin_mcg: { label: 'B12 (Cobal)', unit: 'µg', color: 'text-indigo-400', emoji: '🧬' },
 
     // Minerals
-    calcium_mg: { label: 'Calcium', unit: 'mg', color: 'text-stone-300', icon: Atom },
-    iron_mg: { label: 'Iron', unit: 'mg', color: 'text-red-400', icon: Atom },
-    magnesium_mg: { label: 'Magnesium', unit: 'mg', color: 'text-stone-400', icon: Atom },
-    phosphorus_mg: { label: 'Phosphorus', unit: 'mg', color: 'text-stone-400', icon: Atom },
-    potassium_mg: { label: 'Potassium', unit: 'mg', color: 'text-stone-400', icon: Atom },
-    sodium_mg: { label: 'Sodium', unit: 'mg', color: 'text-stone-400', icon: Atom },
-    zinc_mg: { label: 'Zinc', unit: 'mg', color: 'text-stone-400', icon: Atom },
-    copper_mcg: { label: 'Copper', unit: 'µg', color: 'text-orange-300', icon: Atom },
-    manganese_mg: { label: 'Manganese', unit: 'mg', color: 'text-stone-400', icon: Atom },
-    selenium_mcg: { label: 'Selenium', unit: 'µg', color: 'text-stone-400', icon: Atom },
-    iodine_mcg: { label: 'Iodine', unit: 'µg', color: 'text-stone-400', icon: Atom },
-    chromium_mcg: { label: 'Chromium', unit: 'µg', color: 'text-stone-400', icon: Atom },
-    molybdenum_mcg: { label: 'Molybdenum', unit: 'µg', color: 'text-stone-400', icon: Atom },
-    chloride_mg: { label: 'Chloride', unit: 'mg', color: 'text-stone-400', icon: Atom },
+    calcium_mg: { label: 'Calcium', unit: 'mg', color: 'text-stone-300', emoji: '🦴' },
+    iron_mg: { label: 'Iron', unit: 'mg', color: 'text-red-400', emoji: '🩸' },
+    magnesium_mg: { label: 'Magnesium', unit: 'mg', color: 'text-stone-400', emoji: '🐚' },
+    phosphorus_mg: { label: 'Phosphorus', unit: 'mg', color: 'text-stone-400', emoji: '🌋' },
+    potassium_mg: { label: 'Potassium', unit: 'mg', color: 'text-stone-400', emoji: '🍌' },
+    sodium_mg: { label: 'Sodium', unit: 'mg', color: 'text-stone-400', emoji: '🧂' },
+    zinc_mg: { label: 'Zinc', unit: 'mg', color: 'text-stone-400', emoji: '🛡️' },
+    copper_mcg: { label: 'Copper', unit: 'µg', color: 'text-orange-300', emoji: '🥉' },
+    manganese_mg: { label: 'Manganese', unit: 'mg', color: 'text-stone-400', emoji: '🎡' },
+    selenium_mcg: { label: 'Selenium', unit: 'µg', color: 'text-stone-400', emoji: '🐚' },
+    iodine_mcg: { label: 'Iodine', unit: 'µg', color: 'text-stone-400', emoji: '🐳' },
+    chromium_mcg: { label: 'Chromium', unit: 'µg', color: 'text-stone-400', emoji: '🏎️' },
+    molybdenum_mcg: { label: 'Molybdenum', unit: 'µg', color: 'text-stone-400', emoji: '🔬' },
+    chloride_mg: { label: 'Chloride', unit: 'mg', color: 'text-stone-400', emoji: '🧂' },
 
-    // Lipids
-    cholesterol_mg: { label: 'Cholesterol', unit: 'mg', color: 'text-yellow-500', icon: Droplet },
-    saturated_fat_g: { label: 'Sat. Fat', unit: 'g', color: 'text-red-400', icon: Droplet },
-    monounsaturated_fat_g: { label: 'Mono. Fat', unit: 'g', color: 'text-yellow-400', icon: Droplet },
-    polyunsaturated_fat_g: { label: 'Poly. Fat', unit: 'g', color: 'text-yellow-400', icon: Droplet },
-    trans_fat_g: { label: 'Trans Fat', unit: 'g', color: 'text-red-500', icon: Droplet },
-    omega_3_fatty_acids_g: { label: 'Omega-3', unit: 'g', color: 'text-cyan-400', icon: Droplet },
-    omega_6_fatty_acids_g: { label: 'Omega-6', unit: 'g', color: 'text-blue-400', icon: Droplet },
+    // Supplements
+    creatine_g: { label: 'Creatine', unit: 'g', color: 'text-cyan-400', emoji: '⚡' },
+    epa_mg: { label: 'EPA', unit: 'mg', color: 'text-blue-400', emoji: '🐟' },
+    dha_mg: { label: 'DHA', unit: 'mg', color: 'text-blue-400', emoji: '🐟' },
 };
 
 // ─── SUB-COMPONENTS ──────────────────────────────────────────
 
-const EnergyBlade = ({ label, value, target, color, icon }: any) => {
+const EnergyBlade = ({ label, value, target, color, emoji }: any) => {
     const percentage = Math.min((value / target) * 100, 100);
 
     return (
         <div className="flex items-center gap-3 p-2 rounded-lg bg-neutral-900/50 border border-neutral-800 hover:border-neutral-700 transition-colors group">
-            <div className={clsx("p-2 rounded-md bg-neutral-950 border border-neutral-800 group-hover:bg-neutral-900 transition-colors", color.replace('text-', 'text-'))}>
-                {icon}
+            <div className={clsx("p-2 rounded-md bg-neutral-950 border border-neutral-800 group-hover:bg-neutral-900 transition-colors text-lg")}>
+                {emoji}
             </div>
             <div className="flex-1 flex flex-col justify-center gap-1">
                 <div className="flex justify-between items-end leading-none">
@@ -98,9 +92,15 @@ const EnergyBlade = ({ label, value, target, color, icon }: any) => {
 };
 
 const MicroNode = ({ item, onClick }: { item: any; onClick: () => void }) => {
-    const { label, value, target, unit, color, icon: Icon } = LABEL_MAP[item.key] || item;
-    const progress = Math.min((value / (target || 1)) * 100, 100);
-    const isMet = progress >= 100;
+    const config = LABEL_MAP[item.key] || {};
+    const label = config.label || item.label || item.key;
+    const unit = config.unit || item.unit || '';
+    const color = config.color || item.color || 'text-white';
+    const emoji = config.emoji || item.emoji || '🧬';
+    const value = item.value || 0;
+    const target = item.target || 1;
+
+    const progress = Math.min((value / target) * 100, 100);
 
     return (
         <div
@@ -116,7 +116,7 @@ const MicroNode = ({ item, onClick }: { item: any; onClick: () => void }) => {
                         {Number(value).toFixed(0)} <span className="text-[9px] text-neutral-600 font-normal">{unit}</span>
                     </span>
                 </div>
-                <Icon className={`w-4 h-4 ${color} opacity-50 group-hover:opacity-100 transition-opacity`} />
+                <span className="text-lg opacity-80 group-hover:opacity-100 transition-opacity">{emoji}</span>
             </div>
 
             <div className="w-full h-1 bg-neutral-800 rounded-full overflow-hidden mt-auto">
@@ -252,7 +252,7 @@ export const NutrientMatrix = () => {
     const [selectedNutrient, setSelectedNutrient] = useState<any | null>(null);
     const [selectedMeal, setSelectedMeal] = useState<any | null>(null);
     const [activeTab, setActiveTab] = useState<'nutrients' | 'meals'>('nutrients');
-    const [activeCategory, setActiveCategory] = useState<string>('Vitamins');
+    const [activeCategory, setActiveCategory] = useState('Vitamins');
 
     // Pagination State
     const [page, setPage] = useState(0);
@@ -295,10 +295,10 @@ export const NutrientMatrix = () => {
 
     // Filter & Prepare Data
     const macros = [
-        { key: 'protein_g', label: 'Protein', color: '#8b5cf6', icon: <Droplet size={14} /> },
-        { key: 'carbohydrate_g', label: 'Carbs', color: '#06b6d4', icon: <Zap size={14} /> },
-        { key: 'fat_total_g', label: 'Fats', color: '#10b981', icon: <Wind size={14} /> },
-        { key: 'fiber_dietary_g', label: 'Fiber', color: '#d97706', icon: <Wheat size={14} /> },
+        { key: 'protein_g', label: 'Protein', color: 'text-violet-400', emoji: '⚡' },
+        { key: 'carbohydrate_g', label: 'Carbs', color: 'text-cyan-400', emoji: '🌾' },
+        { key: 'fat_total_g', label: 'Fats', color: 'text-emerald-400', emoji: '💧' },
+        { key: 'fiber_g', label: 'Fiber', color: 'text-amber-500', emoji: '🥗' },
     ].map(m => ({
         ...m,
         value: nutrients[m.key] || 0,
@@ -307,15 +307,13 @@ export const NutrientMatrix = () => {
 
     // Meal Specific Macros Logic
     const mealMacros = selectedMeal ? [
-        { key: 'protein_g', label: 'Protein', color: '#8b5cf6', icon: <Droplet size={14} />, value: selectedMeal.macros.protein || 0, target: targets.protein_g },
-        { key: 'carbohydrate_g', label: 'Carbs', color: '#06b6d4', icon: <Zap size={14} />, value: selectedMeal.macros.carbs || 0, target: targets.carbohydrate_g },
-        { key: 'fat_total_g', label: 'Fats', color: '#10b981', icon: <Wind size={14} />, value: selectedMeal.macros.fats || 0, target: targets.fat_total_g },
-        // Fiber isn't readily available in simple macros object usually, need to check if it's aggregated or in items
-        // For now, we'll try to sum it up from items if available, else 0 (or if backend sends it in macros)
+        { key: 'protein_g', label: 'Protein', color: 'text-violet-400', emoji: '⚡', value: selectedMeal.macros.protein || 0, target: targets.protein_g },
+        { key: 'carbohydrate_g', label: 'Carbs', color: 'text-cyan-400', emoji: '🌾', value: selectedMeal.macros.carbs || 0, target: targets.carbohydrate_g },
+        { key: 'fat_total_g', label: 'Fats', color: 'text-emerald-400', emoji: '💧', value: selectedMeal.macros.fats || 0, target: targets.fat_total_g },
         {
-            key: 'fiber_dietary_g', label: 'Fiber', color: '#d97706', icon: <Wheat size={14} />,
+            key: 'fiber_g', label: 'Fiber', color: 'text-amber-500', emoji: '🥗',
             value: selectedMeal.macros.items ? selectedMeal.macros.items.reduce((acc: number, item: any) => acc + (item.nutrients?.fiber || 0), 0) : 0,
-            target: targets.fiber_dietary_g
+            target: targets.fiber_g
         }
     ] : [];
 
@@ -406,7 +404,7 @@ export const NutrientMatrix = () => {
                         )}
                     </div>
 
-                    <div className="mb-10 text-center mt-8">
+                    <div className="mb-10 text-center mt-11">
                         <div className="flex items-center justify-center gap-2 mb-2 text-cyan-500">
                             <Flame className="w-5 h-5" fill="currentColor" />
                             <span className="text-xs font-bold tracking-widest uppercase">
@@ -437,7 +435,7 @@ export const NutrientMatrix = () => {
                                 value={macro.value}
                                 target={macro.target || 100}
                                 color={macro.color}
-                                icon={macro.icon}
+                                emoji={macro.emoji}
                             />
                         ))}
                     </div>
@@ -536,7 +534,7 @@ export const NutrientMatrix = () => {
                                 </AnimatePresence>
                                 {currentMicros.length === 0 && (
                                     <div className="col-span-full flex flex-col items-center justify-center p-10 text-neutral-600 h-full">
-                                        <Atom className="w-8 h-8 mb-2 opacity-50" />
+                                        <Utensils className="w-8 h-8 mb-2 opacity-50" />
                                         <span className="text-xs uppercase tracking-widest">No Data Available</span>
                                     </div>
                                 )}

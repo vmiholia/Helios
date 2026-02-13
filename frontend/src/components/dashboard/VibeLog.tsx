@@ -532,7 +532,7 @@ export const VibeLog = () => {
                                         onClick={handleSubmit}
                                         disabled={!hasItems && !text.trim()}
                                         className={clsx(
-                                            "flex-1 py-2.5 rounded-xl font-medium text-xs tracking-wide uppercase transition-all flex items-center justify-center gap-2",
+                                            "w-full py-2.5 rounded-xl font-medium text-xs tracking-wide uppercase transition-all flex items-center justify-center gap-2",
                                             (hasItems || text.trim()) && !loading
                                                 ? "bg-white text-black hover:bg-cyan-500 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
                                                 : "bg-neutral-800 text-neutral-600 cursor-not-allowed"
