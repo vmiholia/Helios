@@ -1,0 +1,187 @@
+[
+  {
+    "input_text": "2 eggs, 1 slice of toast",
+    "expected_items": [
+      "eggs",
+      "toast"
+    ],
+    "expected_time": null,
+    "difficulty": "easy"
+  },
+  {
+    "input_text": "Chicken curry with 2 rotis, 1 katori daal",
+    "expected_items": [
+      "chicken curry",
+      "rotis",
+      "daal"
+    ],
+    "expected_time": null,
+    "difficulty": "medium"
+  },
+  {
+    "input_text": "a bowl of rice",
+    "expected_items": [
+      "rice"
+    ],
+    "expected_time": null,
+    "difficulty": "easy"
+  },
+  {
+    "input_text": "1 idli, 2 vada",
+    "expected_items": [
+      "idli",
+      "vada"
+    ],
+    "expected_time": null,
+    "difficulty": "medium"
+  },
+  {
+    "input_text": "coffee and a bagel",
+    "expected_items": [
+      "coffee",
+      "bagel"
+    ],
+    "expected_time": null,
+    "difficulty": "easy"
+  },
+  {
+    "input_text": "had breakfast at 9am: oatmeal",
+    "expected_items": [
+      "oatmeal"
+    ],
+    "expected_time": "09:00",
+    "difficulty": "easy"
+  },
+  {
+    "input_text": "dinner: chicken biryani, raita",
+    "expected_items": [
+      "chicken biryani",
+      "raita"
+    ],
+    "expected_time": "20:00",
+    "difficulty": "medium"
+  },
+  {
+    "input_text": "Snack: 2 samosas, 1 cup of chai",
+    "expected_items": [
+      "samosas",
+      "chai"
+    ],
+    "expected_time": null,
+    "difficulty": "medium"
+  },
+  {
+    "input_text": "Lunch: salad with grilled chicken, 1 naan",
+    "expected_items": [
+      "salad",
+      "grilled chicken",
+      "naan"
+    ],
+    "expected_time": "12:00",
+    "difficulty": "medium"
+  },
+  {
+    "input_text": "Dinner: 1 plate of paneer tikka masala, 2 rotis",
+    "expected_items": [
+      "paneer tikka masala",
+      "rotis"
+    ],
+    "expected_time": "20:00",
+    "difficulty": "medium"
+  },
+  {
+    "input_text": "Breakfast: 2 eggs, 3 slices of bacon, 1 slice of toast",
+    "expected_items": [
+      "eggs",
+      "bacon",
+      "toast"
+    ],
+    "expected_time": "08:00",
+    "difficulty": "medium"
+  },
+  {
+    "input_text": "Snack: 1 apple, 1 granola bar",
+    "expected_items": [
+      "apple",
+      "granola bar"
+    ],
+    "expected_time": null,
+    "difficulty": "easy"
+  },
+  {
+    "input_text": "Lunch: bowl of tomato soup, 2 slices of grilled cheese sandwich",
+    "expected_items": [
+      "tomato soup",
+      "grilled cheese sandwich"
+    ],
+    "expected_time": "12:00",
+    "difficulty": "medium"
+  },
+  {
+    "input_text": "Dinner: 1 plate of dal makhani, 2 naan, 1 raita",
+    "expected_items": [
+      "dal makhani",
+      "naan",
+      "raita"
+    ],
+    "expected_time": "20:00",
+    "difficulty": "medium"
+  },
+  {
+    "input_text": "Snack: handful of mixed nuts, 1 banana",
+    "expected_items": [
+      "mixed nuts",
+      "banana"
+    ],
+    "expected_time": null,
+    "difficulty": "easy"
+  },
+  {
+    "input_text": "Breakfast: 1 bowl of oatmeal with berries, 1 cup of coffee",
+    "expected_items": [
+      "oatmeal",
+      "berries",
+      "coffee"
+    ],
+    "expected_time": "08:00",
+    "difficulty": "medium"
+  },
+  {
+    "input_text": "Lunch: 1 chicken caesar salad, 1 slice of garlic bread",
+    "expected_items": [
+      "chicken caesar salad",
+      "garlic bread"
+    ],
+    "expected_time": "12:00",
+    "difficulty": "medium"
+  },
+  {
+    "input_text": "Dinner: 1 plate of palak paneer, 2 rotis",
+    "expected_items": [
+      "palak paneer",
+      "rotis"
+    ],
+    "expected_time": "20:00",
+    "difficulty": "medium"
+  },
+  {
+    "input_text": "Snack: 1 granola bar, 1 apple, 1 cup of green tea",
+    "expected_items": [
+      "granola bar",
+      "apple",
+      "green tea"
+    ],
+    "expected_time": null,
+    "difficulty": "medium"
+  },
+  {
+    "input_text": "Breakfast: 2 idli, 1 vada, 1 cup of filter coffee",
+    "expected_items": [
+      "idli",
+      "vada",
+      "filter coffee"
+    ],
+    "expected_time": "08:00",
+    "difficulty": "medium"
+  }
+]

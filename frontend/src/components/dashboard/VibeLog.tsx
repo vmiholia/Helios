@@ -55,12 +55,23 @@ interface MealItem {
     quantity: string;
     note?: string;
     source: 'preset' | 'parsed' | 'custom';
+    nutrients?: {
+        calories: number;
+        protein: number;
+        carbs: number;
+        fats: number;
+        fiber: number;
+    };
+    micros?: Record<string, number>;
+    weight_g?: number; // Added weight
+    isUpdating?: boolean; // For loading state during edit
 }
 
 export const VibeLog = () => {
     const { deleteEntry, loading, prefillText, setPrefillText } = useHealthStore();
     const [lastLog, setLastLog] = useState<any | null>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const updateTimeouts = useRef<Record<number, NodeJS.Timeout>>({}); // Ref for debounce timeouts
 
     // ── Free text input state ──
     const [text, setText] = useState('');
@@ -100,12 +111,12 @@ export const VibeLog = () => {
         setIsParsing(true);
 
         try {
-            const res = await fetch('http://localhost:8000/parse', {
+            const res = await fetch('http://localhost:8000/preview_log', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ raw_text: text })
             });
-            if (!res.ok) throw new Error('Parse failed');
+            if (!res.ok) throw new Error('Preview failed');
             const data = await res.json();
 
             // Merge parsed items into the list
@@ -114,6 +125,9 @@ export const VibeLog = () => {
                 quantity: item.quantity,
                 note: item.note,
                 source: 'parsed' as const,
+                nutrients: item.nutrients,
+                micros: item.micros,
+                weight_g: item.weight_g
             }));
             setItems(prev => [...prev, ...parsedItems]);
 
@@ -128,6 +142,88 @@ export const VibeLog = () => {
             setIsParsing(false);
         }
     };
+
+    const handleQuantityChange = (index: number, newQty: string) => {
+        // 1. Optimistic Update
+        setItems(prev => {
+            const next = [...prev];
+            next[index] = { ...next[index], quantity: newQty };
+            return next;
+        });
+
+        // 2. Debounce Fetch
+        if (updateTimeouts.current[index]) clearTimeout(updateTimeouts.current[index]);
+
+        updateTimeouts.current[index] = setTimeout(async () => {
+            // Set loading state for this item
+            setItems(prev => {
+                const next = [...prev];
+                next[index] = { ...next[index], isUpdating: true };
+                return next;
+            });
+
+            try {
+                // Fetch just this item's info
+                const item = items[index]; // Note: this might be stale in closure? 
+                // We use newQty which is fresh.
+                const queryText = `${newQty} ${item.name}`;
+
+                const res = await fetch('http://localhost:8000/preview_log', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ raw_text: queryText })
+                });
+
+                if (!res.ok) throw new Error('Update failed');
+                const data = await res.json();
+
+                if (data.items && data.items.length > 0) {
+                    const newItem = data.items[0];
+                    setItems(prev => {
+                        const next = [...prev];
+                        next[index] = {
+                            ...next[index],
+                            name: newItem.name, // Update name in case it refined
+                            nutrients: newItem.nutrients,
+                            micros: newItem.micros,
+                            weight_g: newItem.weight_g,
+                            isUpdating: false
+                        };
+                        return next;
+                    });
+                } else {
+                    setItems(prev => {
+                        const next = [...prev];
+                        next[index] = { ...next[index], isUpdating: false }; // Failed to parse
+                        return next;
+                    });
+                }
+
+            } catch (error) {
+                console.error("Failed to update item", error);
+                setItems(prev => {
+                    const next = [...prev];
+                    next[index] = { ...next[index], isUpdating: false };
+                    return next;
+                });
+            }
+        }, 800);
+    };
+
+    // Update item quantity with debounce
+    useEffect(() => {
+        const timeoutIds: NodeJS.Timeout[] = [];
+        items.forEach((item, index) => {
+            if (item.isUpdating) return; // Already updating or just updated
+            // This effect logic is tricky for individual items without complex tracking.
+            // Better approach: handle change, set 'needsUpdate' flag or just debounce the fetch call directly in the change handler.
+        });
+        return () => timeoutIds.forEach(clearTimeout);
+    }, [items]);
+
+
+
+    // Using a ref to track timeouts for each item index
 
     // Add a preset portion from category chips
     const addPresetItem = (portion: string) => {
@@ -336,6 +432,33 @@ export const VibeLog = () => {
                     </table>
                 </div>
 
+                {/* TRACE ELEMENTS GRID */}
+                {
+                    lastLog.macros.micros && Object.keys(lastLog.macros.micros).length > 0 && (
+                        <div className="mb-4">
+                            <p className="text-[9px] uppercase tracking-widest text-neutral-500 font-bold mb-2 pl-1">Trace Elements</p>
+                            <div className="grid grid-cols-3 gap-2">
+                                {Object.entries(lastLog.macros.micros)
+                                    .filter(([key]) => key !== 'fiber' && key !== 'fiber_g')
+                                    .map(([key, value]) => {
+                                        // Format key: "vitamin_c_mg" -> "Vitamin C"
+                                        const label = key
+                                            .replace(/_/g, ' ')
+                                            .replace(/\s(mg|g|iu|mcg)$/i, '')
+                                            .replace(/\b\w/g, l => l.toUpperCase());
+
+                                        return (
+                                            <div key={key} className="bg-neutral-900/40 border border-white/5 rounded-lg p-2 flex justify-between items-center">
+                                                <span className="text-[10px] text-neutral-400">{label}</span>
+                                                <span className="text-[10px] font-mono font-bold text-cyan-400">{Number(value).toFixed(1)}</span>
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                        </div>
+                    )
+                }
+
                 <div className="flex gap-3">
                     <button
                         onClick={handleUndo}
@@ -350,7 +473,7 @@ export const VibeLog = () => {
                         Looks Good (OK)
                     </button>
                 </div>
-            </motion.div>
+            </motion.div >
         );
     };
 
@@ -505,6 +628,18 @@ export const VibeLog = () => {
                                     {/* Active Items List */}
                                     {hasItems && (
                                         <div className="space-y-1.5 mb-4">
+                                            {/* Preview Header - CSS GRID */}
+                                            <div className="grid grid-cols-[15%_25%_12%_10%_8%_8%_8%_8%_6%] gap-2 px-2 pb-2 border-b border-white/5 text-[9px] uppercase tracking-wider font-bold text-neutral-500 items-center">
+                                                <span>Qty</span>
+                                                <span>Item</span>
+                                                <span className="text-right">Weight</span>
+                                                <span className="text-right text-cyan-600">Cal</span>
+                                                <span className="text-right text-violet-600">Pro</span>
+                                                <span className="text-right text-blue-600">Carb</span>
+                                                <span className="text-right text-emerald-600">Fat</span>
+                                                <span className="text-right text-amber-600">Fib</span>
+                                                <span></span>
+                                            </div>
                                             <AnimatePresence>
                                                 {items.map((item, i) => (
                                                     <motion.div
@@ -512,18 +647,80 @@ export const VibeLog = () => {
                                                         initial={{ opacity: 0, x: -10 }}
                                                         animate={{ opacity: 1, x: 0 }}
                                                         exit={{ opacity: 0, height: 0 }}
-                                                        className="flex items-center justify-between group p-2 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 transition-colors"
+                                                        className="grid grid-cols-[15%_25%_12%_10%_8%_8%_8%_8%_6%] gap-2 items-center p-2 rounded-lg bg-white/5 border border-white/5 hover:border-white/10 transition-colors group relative"
                                                     >
-                                                        <div className="flex items-baseline gap-2">
-                                                            <span className="text-cyan-400 text-xs font-mono">{item.quantity}</span>
-                                                            <span className="text-neutral-300 text-xs">{item.name}</span>
+                                                        {/* Qty Input */}
+                                                        <div>
+                                                            <input
+                                                                type="text"
+                                                                value={item.quantity}
+                                                                onChange={(e) => handleQuantityChange(i, e.target.value)}
+                                                                className="w-full bg-transparent border-b border-white/10 focus:border-cyan-500/50 text-cyan-400 text-xs font-mono py-0.5 outline-none transition-colors"
+                                                            />
                                                         </div>
-                                                        <button onClick={() => removeItem(i)} className="opacity-0 group-hover:opacity-100 text-neutral-600 hover:text-red-400 transition-opacity">
-                                                            <X className="w-3 h-3" />
-                                                        </button>
+
+                                                        {/* Name */}
+                                                        <div className="text-neutral-300 text-xs truncate" title={item.name}>
+                                                            {item.name}
+                                                        </div>
+
+                                                        {/* Weight */}
+                                                        <div className="text-right text-[10px] text-neutral-500 font-mono">
+                                                            {item.weight_g ? Math.round(item.weight_g) + 'g' : '-'}
+                                                        </div>
+
+                                                        {/* Nutrients */}
+                                                        <div className="text-right text-cyan-400 text-[10px] font-mono font-bold">
+                                                            {item.isUpdating ? <Loader2 className="w-3 h-3 animate-spin ml-auto" /> : Math.round(item.nutrients?.calories || 0)}
+                                                        </div>
+                                                        <div className="text-right text-violet-400 text-[10px] font-mono">
+                                                            {item.isUpdating ? '-' : Math.round(item.nutrients?.protein || 0)}
+                                                        </div>
+                                                        <div className="text-right text-blue-400 text-[10px] font-mono">
+                                                            {item.isUpdating ? '-' : Math.round(item.nutrients?.carbs || 0)}
+                                                        </div>
+                                                        <div className="text-right text-emerald-400 text-[10px] font-mono">
+                                                            {item.isUpdating ? '-' : Math.round(item.nutrients?.fats || 0)}
+                                                        </div>
+                                                        <div className="text-right text-amber-500 text-[10px] font-mono">
+                                                            {item.isUpdating ? '-' : Math.round(item.nutrients?.fiber || 0)}
+                                                        </div>
+
+                                                        {/* Remove */}
+                                                        <div className="text-right">
+                                                            <button onClick={() => removeItem(i)} className="opacity-0 group-hover:opacity-100 text-neutral-600 hover:text-red-400 transition-opacity">
+                                                                <X className="w-3 h-3" />
+                                                            </button>
+                                                        </div>
                                                     </motion.div>
                                                 ))}
                                             </AnimatePresence>
+
+                                            {/* Live Total */}
+                                            {items.length > 0 && (
+                                                <div className="mt-2 pt-2 border-t border-white/10 grid grid-cols-[15%_25%_12%_10%_8%_8%_8%_8%_6%] gap-2 px-2 items-center">
+                                                    <div className="col-span-2 text-[10px] font-mono font-bold text-neutral-500 uppercase tracking-widest text-right pr-2">Total</div>
+                                                    <div className="text-right text-[10px] font-mono text-neutral-600">
+                                                        {Math.round(items.reduce((acc, i) => acc + (i.weight_g || 0), 0))}g
+                                                    </div>
+                                                    <div className="text-right text-[10px] font-mono font-bold text-cyan-400">
+                                                        {Math.round(items.reduce((acc, i) => acc + (i.nutrients?.calories || 0), 0))}
+                                                    </div>
+                                                    <div className="text-right text-[10px] font-mono font-bold text-violet-400">
+                                                        {Math.round(items.reduce((acc, i) => acc + (i.nutrients?.protein || 0), 0))}
+                                                    </div>
+                                                    <div className="text-right text-[10px] font-mono font-bold text-blue-400">
+                                                        {Math.round(items.reduce((acc, i) => acc + (i.nutrients?.carbs || 0), 0))}
+                                                    </div>
+                                                    <div className="text-right text-[10px] font-mono font-bold text-emerald-400">
+                                                        {Math.round(items.reduce((acc, i) => acc + (i.nutrients?.fats || 0), 0))}
+                                                    </div>
+                                                    <div className="text-right text-[10px] font-mono font-bold text-amber-500">
+                                                        {Math.round(items.reduce((acc, i) => acc + (i.nutrients?.fiber || 0), 0))}
+                                                    </div>
+                                                    <div></div>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 

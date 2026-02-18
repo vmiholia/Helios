@@ -32,3 +32,39 @@ class DailyGoal(DailyGoalBase):
 
     class Config:
         from_attributes = True
+
+# Food Item Schemas
+class FoodItemBase(BaseModel):
+    name: str
+    calories_per_100: int
+    protein_per_100: int
+    carbs_per_100: int
+    fats_per_100: int
+    default_unit: str = "g"
+    micros: Optional[Dict] = None
+
+class FoodItemCreate(FoodItemBase):
+    pass
+
+class FoodItem(FoodItemBase):
+    id: int
+    created_at: datetime
+    source: str
+
+    class Config:
+        from_attributes = True
+
+# Portion Unit Schemas
+class PortionUnitBase(BaseModel):
+    name: str
+    weight_in_grams: int
+    description: Optional[str] = None
+
+class PortionUnitCreate(PortionUnitBase):
+    pass
+
+class PortionUnit(PortionUnitBase):
+    id: int
+
+    class Config:
+        from_attributes = True

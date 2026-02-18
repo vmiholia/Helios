@@ -3,14 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { VibeLog } from './components/dashboard/VibeLog';
 import { NutrientMatrix } from './components/dashboard/NutrientMatrix';
 import { EntryFeed } from './components/dashboard/EntryFeed';
+import { EvalDashboard } from './components/evals/EvalDashboard';
 
 import { ShuffleText } from './components/ui/ShuffleText';
 import { useHealthStore } from './store/healthStore';
-import { ScrollText, X, Zap } from 'lucide-react';
+import { ScrollText, X, Zap, Settings } from 'lucide-react';
 
 function App() {
   const { fetchDashboard } = useHealthStore();
   const [showLogs, setShowLogs] = useState(false);
+  const [currentView, setCurrentView] = useState<'home' | 'evals'>('home');
+
 
   React.useEffect(() => {
     fetchDashboard();
@@ -23,38 +26,67 @@ function App() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-neutral-950/80 backdrop-blur-xl border-b border-neutral-800">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           {/* Left: Branding */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentView('home')}>
             <ShuffleText text="HELIOS" className="font-bold tracking-tight text-white text-lg font-mono" />
             <Zap className="w-5 h-5 text-cyan-500 fill-cyan-500/20" />
           </div>
 
-          {/* Right: Logs Toggle */}
-          <button
-            onClick={() => setShowLogs(true)}
-            className="flex items-center gap-2 text-xs font-medium text-neutral-500 hover:text-white transition-colors"
-          >
-            <ScrollText className="w-4 h-4" />
-            LOGS
-          </button>
+          <div className="flex items-center gap-6">
+            {/* Logs Toggle */}
+            <button
+              onClick={() => setShowLogs(true)}
+              className="flex items-center gap-2 text-xs font-medium text-neutral-500 hover:text-white transition-colors"
+            >
+              <ScrollText className="w-4 h-4" />
+              LOGS
+            </button>
+
+            {/* Evals Link */}
+            <button
+              onClick={() => setCurrentView(v => v === 'evals' ? 'home' : 'evals')}
+              className={`flex items-center gap-2 text-xs font-medium transition-colors ${currentView === 'evals' ? 'text-cyan-400' : 'text-neutral-500 hover:text-white'
+                }`}
+            >
+              <Settings className="w-4 h-4" />
+              EVALS
+            </button>
+          </div>
         </div>
       </header>
 
       {/* MAIN CONTENT */}
       <main className="pt-24 pb-12 px-4 max-w-7xl mx-auto">
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <AnimatePresence mode="wait">
+          {currentView === 'home' ? (
+            <motion.div
+              key="home"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start"
+            >
+              {/* LEFT COLUMN: Input & Quick Add (Fixed 5 Cols) */}
+              <div className="lg:col-span-5 space-y-6">
+                <VibeLog />
+              </div>
 
-          {/* LEFT COLUMN: Input & Quick Add (Fixed 5 Cols) */}
-          <div className="lg:col-span-5 space-y-6">
-            <VibeLog />
-          </div>
-
-          {/* RIGHT COLUMN: Nutrient Matrix (Fixed 7 Cols) */}
-          <div className="lg:col-span-7 sticky top-24">
-            <NutrientMatrix />
-          </div>
-
-        </div>
+              {/* RIGHT COLUMN: Nutrient Matrix (Fixed 7 Cols) */}
+              <div className="lg:col-span-7 sticky top-24">
+                <NutrientMatrix />
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="evals"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <EvalDashboard />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </main>
 

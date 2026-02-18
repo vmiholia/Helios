@@ -20,3 +20,32 @@ class DailyGoal(Base):
     calorie_target = Column(Integer, default=2000)
     protein_target = Column(Integer, default=150)
     water_target_ml = Column(Integer, default=3000)
+
+class FoodItem(Base):
+    __tablename__ = "food_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True, nullable=False)
+    
+    # Base macros per 100g/ml
+    calories_per_100 = Column(Integer, default=0)
+    protein_per_100 = Column(Integer, default=0)
+    carbs_per_100 = Column(Integer, default=0)
+    fats_per_100 = Column(Integer, default=0)
+    
+    # Full Micronutrient Profile (JSON)
+    micros = Column(JSON, nullable=True)
+    
+    default_unit = Column(String, default="g") # 'g' or 'ml'
+    
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    source = Column(String, default="user_log") # 'user_log', 'seed', 'manual'
+
+class PortionUnit(Base):
+    __tablename__ = "portion_units"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, nullable=False) # 'katori', 'bowl', 'tablespoon'
+    weight_in_grams = Column(Integer, nullable=False) # Standard conversion
+    description = Column(String, nullable=True)

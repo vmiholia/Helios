@@ -118,25 +118,21 @@ interface HealthState {
 
 // ─── Store Helper ────────────────────────────────────────────
 
-const aggregateNutrients = (entries: Entry[]): Record<string, number> => {
-    const totalNutrients: Record<string, number> = {};
+const aggregateNutrients = (entries: Entry[], dashboardMicros?: Record<string, number>): Record<string, number> => {
+    // If the backend provides pre-aggregated micros in 'dashboardMicros', use that as base
+    const totalNutrients: Record<string, number> = dashboardMicros ? { ...dashboardMicros } : {};
 
-    entries.forEach(entry => {
-        // MICRO-NUTRIENTS STRATEGY:
-        // The backend provides a comprehensive 'micros' object at the entry level which contains 
-        // the sum of all vitamins/minerals for that log. Item-level 'nutrients' only contain 
-        // basic macros (protein/fats/carbs). Therefore, we MUST use the top-level 'micros' 
-        // object for all micronutrient calculations.
-
-        if (entry.macros && entry.macros.micros) {
-            Object.entries(entry.macros.micros).forEach(([key, value]) => {
-                // Accumulate values. 
-                // Ensure we handle strings that might slip through (though types say numbers)
-                const val = Number(value) || 0;
-                totalNutrients[key] = (totalNutrients[key] || 0) + val;
-            });
-        }
-    });
+    // Fallback: Aggregate manually if needed (though backend now does this)
+    if (!dashboardMicros || Object.keys(dashboardMicros).length === 0) {
+        entries.forEach(entry => {
+            if (entry.macros && entry.macros.micros) {
+                Object.entries(entry.macros.micros).forEach(([key, value]) => {
+                    const val = Number(value) || 0;
+                    totalNutrients[key] = (totalNutrients[key] || 0) + val;
+                });
+            }
+        });
+    }
 
     return totalNutrients;
 };
@@ -166,8 +162,9 @@ export const useHealthStore = create<HealthState>((set, get) => ({
             if (!res.ok) throw new Error('Failed to fetch dashboard');
             const data = await res.json();
 
-            // Calculate Aggregated Nutrients from Entries
-            const aggregated = aggregateNutrients(data.entries || []);
+            // Calculate Aggregated Nutrients
+            // Now passing data.totals.micros which we added to backend response
+            const aggregated = aggregateNutrients(data.entries || [], data.totals.micros);
 
             // Merge with main totals for macros to ensure accuracy
             aggregated.calories = data.totals.calories;
