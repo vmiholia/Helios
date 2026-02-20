@@ -164,7 +164,7 @@ JSON Schema:
     }}
 }}
 """
-    model_name = "claude-3-haiku-20240307"
+    model_name = "claude-sonnet-4-5"  # Sonnet for better nutrition accuracy
     try:
         message = client.messages.create(
             model=model_name,
@@ -197,6 +197,6 @@ JSON Schema:
         
         # Log error
         latency = (time.time() - start_time) * 1000
-        log_trace("estimate_metric_macros", {"food_name": food_name}, error_result, latency, model_name, error=e)
+        log_trace("estimate_metric_macros", {"food_name": food_name}, error_result, latency, "claude-sonnet-4-5", error=e)
         
         return error_result
